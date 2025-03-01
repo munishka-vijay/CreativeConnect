@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreativeConnect - Find Creative Talent</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-storage-compat.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-indigo-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-xl font-bold" onclick="showPage('landing')">CreativeConnect</a>
+            <div class="space-x-4">
+                <button id="loginBtn" onclick="showPage('login')" class="px-3 py-1 rounded hover:bg-indigo-800">Log In</button>
+                <button id="signupBtn" onclick="showPage('signup')" class="px-3 py-1 bg-white text-indigo-600 rounded hover:bg-gray-200">Sign Up</button>
+                <button id="logoutBtn" onclick="logout()" class="hidden px-3 py-1 rounded hover:bg-indigo-800">Log Out</button>
+                <button id="profileBtn" onclick="showPage('profile')" class="hidden px-3 py-1 rounded hover:bg-indigo-800">My Profile</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <div id="landing" class="container mx-auto p-4">
+        <div class="text-center py-10">
+            <h1 class="text-4xl font-bold mb-4">Connect Creative Talent with Opportunities</h1>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">A simple platform for creative professionals to showcase their work and for recruiters to find the perfect match.</p>
+            <div class="flex justify-center space-x-4">
+                <button onclick="showPage('signup')" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">Join as Creative</button>
+                <button onclick="showPage('search')" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">Search for Talent</button>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-indigo-600 text-4xl mb-4">🎨</div>
+                <h3 class="text-xl font-bold mb-2">Showcase Your Work</h3>
+                <p>Upload your portfolio pieces and connect your social media accounts to display your creative range.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-indigo-600 text-4xl mb-4">🔍</div>
+                <h3 class="text-xl font-bold mb-2">Get Discovered</h3>
+                <p>Set your preferences, skills, and salary expectations to match with the perfect opportunities.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-indigo-600 text-4xl mb-4">🤝</div>
+                <h3 class="text-xl font-bold mb-2">Connect Directly</h3>
+                <p>No middleman. Recruiters can contact you directly when they find the right match.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login" class="container mx-auto p-4 hidden">
+        <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6">Log In</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-1">Email</label>
+                    <input type="email" id="loginEmail" class="w-full p-2 border rounded" placeholder="your@email.com">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full p-2 border rounded" placeholder="••••••••">
+                </div>
+                <button onclick="login()" class="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">Log In</button>
+                <p class="text-center">Don't have an account? <a href="#" onclick="showPage('signup')" class="text-indigo-600">Sign up</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Page -->
+    <div id="signup" class="container mx-auto p-4 hidden">
+        <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6">Create Account</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signupEmail" class="w-full p-2 border rounded" placeholder="your@email.com">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Password</label>
+                    <input type="password" id="signupPassword" class="w-full p-2 border rounded" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Account Type</label>
+                    <select id="accountType" class="w-full p-2 border rounded">
+                        <option value="creative">Creative Professional</option>
+                        <option value="recruiter">Recruiter</option>
+                    </select>
+                </div>
+                <button onclick="signup()" class="w-full bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700">Create Account</button>
+                <p class="text-center">Already have an account? <a href="#" onclick="showPage('login')" class="text-indigo-600">Log in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Creation/Edit Page -->
+    <div id="profile" class="container mx-auto p-4 hidden">
+        <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold mb-6">Your Creative Profile</h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 mb-1">Full Name*</label>
+                    <input type="text" id="profileName" class="w-full p-2 border rounded" placeholder="Jane Doe">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Professional Title*</label>
+                    <input type="text" id="profileTitle" class="w-full p-2 border rounded" placeholder="Graphic Designer">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Bio</label>
+                    <textarea id="profileBio" class="w-full p-2 border rounded h-32" placeholder="Tell potential recruiters about yourself, your experience, and your creative approach..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Skills (comma-separated)*</label>
+                    <input type="text" id="profileSkills" class="w-full p-2 border rounded" placeholder="UI Design, Illustration, Typography">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Location Preference</label>
+                    <input type="text" id="profileLocation" class="w-full p-2 border rounded" placeholder="Remote, New York, London">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Expected Pay (hourly rate or salary range)</label>
+                    <input type="text" id="profilePay" class="w-full p-2 border rounded" placeholder="$50-75/hour or $70,000-90,000/year">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Portfolio Links (one per line)</label>
+                    <textarea id="profilePortfolio" class="w-full p-2 border rounded h-24" placeholder="https://myportfolio.com
+https://behance.net/myusername"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Social Media</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <input type="text" id="profileLinkedin" class="w-full p-2 border rounded" placeholder="LinkedIn URL">
+                        </div>
+                        <div>
+                            <input type="text" id="profileTwitter" class="w-full p-2 border rounded" placeholder="Twitter/X URL">
+                        </div>
+                        <div>
+                            <input type="text" id="profileInstagram" class="w-full p-2 border rounded" placeholder="Instagram URL">
+                        </div>
+                        <div>
+                            <input type="text" id="profileBehance" class="w-full p-2 border rounded" placeholder="Behance URL">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 mb-1">Contact Email*</label>
+                    <input type="email" id="profileEmail" class="w-full p-2 border rounded" placeholder="contact@email.com">
+                </div>
+                
+                <div class="pt-4 border-t">
+                    <button onclick="saveProfile()" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Save Profile</button>
+                    <span id="profileSaveStatus" class="ml-4 text-green-600 hidden">Profile saved successfully!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Page -->
+    <div id="search" class="container mx-auto p-4 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-2xl font-bold mb-4">Find Creative Talent</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-gray-700 mb-1">Skills or Keywords</label>
+                    <input type="text" id="searchSkills" class="w-full p-2 border rounded" placeholder="UI Design, Illustration">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Location</label>
+                    <input type="text" id="searchLocation" class="w-full p-2 border rounded" placeholder="Remote, New York">
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-1">Professional Title</label>
+                    <input type="text" id="searchTitle" class="w-full p-2 border rounded" placeholder="Graphic Designer">
+                </div>
+            </div>
+            <div class="mt-4">
+                <button onclick="searchProfiles()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Search</button>
+            </div>
+        </div>
+        
+        <div id="searchResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Search results will be populated here -->
+        </div>
+    </div>
+
+    <!-- Profile View Page -->
+    <div id="profileView" class="container mx-auto p-4 hidden">
+        <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <button onclick="showPage('search')" class="text-indigo-600 mb-6">← Back to Search</button>
+            <div id="profileViewContent">
+                <!-- Profile details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration - you'll need to replace this with your own Firebase project details
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // Current user state
+        let currentUser = null;
+        
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            updateUIForAuth();
+            
+            if (user) {
+                // Load user profile if they're logged in
+                loadUserProfile();
+            }
+        });
+        
+        // Show the specified page and hide others
+        function showPage(pageId) {
+            const pages = ['landing', 'login', 'signup', 'profile', 'search', 'profileView'];
+            
+            pages.forEach(page => {
+                document.getElementById(page).classList.add('hidden');
+            });
+            
+            document.getElementById(pageId).classList.remove('hidden');
+            
+            // Special handling for the search page - load all profiles
+            if (pageId === 'search') {
+                loadAllProfiles();
+            }
+        }
+        
+        // Update UI based on authentication state
+        function updateUIForAuth() {
+            const loginBtn = document.getElementById('loginBtn');
+            const signupBtn = document.getElementById('signupBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const profileBtn = document.getElementById('profileBtn');
+            
+            if (currentUser) {
+                loginBtn.classList.add('hidden');
+                signupBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                profileBtn.classList.remove('hidden');
+            } else {
+                loginBtn.classList.remove('hidden');
+                signupBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                profileBtn.classList.add('hidden');
+            }
+        }
+        
+        // Login function
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showPage('landing');
+                })
+                .catch(error => {
+                    alert('Login error: ' + error.message);
+                });
+        }
+        
+        // Signup function
+        function signup() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const accountType = document.getElementById('accountType').value;
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    // Store account type in Firestore
+                    return db.collection('users').doc(userCredential.user.uid).set({
+                        email: email,
+                        accountType: accountType,
+                        createdAt: new Date()
+                    });
+                })
+                .then(() => {
+                    if (accountType === 'creative') {
+                        showPage('profile');
+                    } else {
+                        showPage('search');
+                    }
+                })
+                .catch(error => {
+                    alert('Signup error: ' + error.message);
+                });
+        }
+        
+        // Logout function
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    showPage('landing');
+                })
+                .catch(error => {
+                    alert('Logout error: ' + error.message);
+                });
+        }
+        
+        // Load user profile data
+        function loadUserProfile() {
+            if (!currentUser) return;
+            
+            db.collection('profiles').doc(currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('profileName').value = data.name || '';
+                        document.getElementById('profileTitle').value = data.title || '';
+                        document.getElementById('profileBio').value = data.bio || '';
+                        document.getElementById('profileSkills').value = data.skills || '';
+                        document.getElementById('profileLocation').value = data.location || '';
+                        document.getElementById('profilePay').value = data.pay || '';
+                        document.getElementById('profilePortfolio').value = data.portfolio || '';
+                        document.getElementById('profileLinkedin').value = data.linkedin || '';
+                        document.getElementById('profileTwitter').value = data.twitter || '';
+                        document.getElementById('profileInstagram').value = data.instagram || '';
+                        document.getElementById('profileBehance').value = data.behance || '';
+                        document.getElementById('profileEmail').value = data.contactEmail || currentUser.email;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading profile:', error);
+                });
+        }
+        
+        // Save profile data
+        function saveProfile() {
+            if (!currentUser) {
+                alert('You must be logged in to save a profile');
+                return;
+            }
+            
+            const profileData = {
+                name: document.getElementById('profileName').value,
+                title: document.getElementById('profileTitle').value,
+                bio: document.getElementById('profileBio').value,
+                skills: document.getElementById('profileSkills').value,
+                location: document.getElementById('profileLocation').value,
+                pay: document.getElementById('profilePay').value,
+                portfolio: document.getElementById('profilePortfolio').value,
+                linkedin: document.getElementById('profileLinkedin').value,
+                twitter: document.getElementById('profileTwitter').value,
+                instagram: document.getElementById('profileInstagram').value,
+                behance: document.getElementById('profileBehance').value,
+                contactEmail: document.getElementById('profileEmail').value,
+                updatedAt: new Date()
+            };
+            
+            // Validation for required fields
+            if (!profileData.name || !profileData.title || !profileData.skills || !profileData.contactEmail) {
+                alert('Please fill out all required fields (marked with *)');
+                return;
+            }
+            
+            db.collection('profiles').doc(currentUser.uid).set(profileData, { merge: true })
+                .then(() => {
+                    const statusEl = document.getElementById('profileSaveStatus');
+                    statusEl.classList.remove('hidden');
+                    setTimeout(() => {
+                        statusEl.classList.add('hidden');
+                    }, 3000);
+                })
+                .catch(error => {
+                    alert('Error saving profile: ' + error.message);
+                });
+        }
+        
+        // Load all profiles for the search page
+        function loadAllProfiles() {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '<p class="col-span-full text-center">Loading profiles...</p>';
+            
+            db.collection('profiles').get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        resultsContainer.innerHTML = '<p class="col-span-full text-center">No profiles found. Be the first to create one!</p>';
+                        return;
+                    }
+                    
+                    resultsContainer.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const profile = doc.data();
+                        const profileCard = createProfileCard(doc.id, profile);
+                        resultsContainer.appendChild(profileCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading profiles:', error);
+                    resultsContainer.innerHTML = '<p class="col-span-full text-center">Error loading profiles. Please try again.</p>';
+                });
+        }
+        
+        // Search profiles based on criteria
+        function searchProfiles() {
+            const skills = document.getElementById('searchSkills').value.toLowerCase();
+            const location = document.getElementById('searchLocation').value.toLowerCase();
+            const title = document.getElementById('searchTitle').value.toLowerCase();
+            
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '<p class="col-span-full text-center">Searching...</p>';
+            
+            db.collection('profiles').get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        resultsContainer.innerHTML = '<p class="col-span-full text-center">No profiles found.</p>';
+                        return;
+                    }
+                    
+                    resultsContainer.innerHTML = '';
+                    let matchCount = 0;
+                    
+                    snapshot.forEach(doc => {
+                        const profile = doc.data();
+                        let match = true;
+                        
+                        if (skills && !profile.skills?.toLowerCase().includes(skills)) {
+                            match = false;
+                        }
+                        
+                        if (location && !profile.location?.toLowerCase().includes(location)) {
+                            match = false;
+                        }
+                        
+                        if (title && !profile.title?.toLowerCase().includes(title)) {
+                            match = false;
+                        }
+                        
+                        if (match) {
+                            matchCount++;
+                            const profileCard = createProfileCard(doc.id, profile);
+                            resultsContainer.appendChild(profileCard);
+                        }
+                    });
+                    
+                    if (matchCount === 0) {
+                        resultsContainer.innerHTML = '<p class="col-span-full text-center">No matches found for your search criteria.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching profiles:', error);
+                    resultsContainer.innerHTML = '<p class="col-span-full text-center">Error searching profiles. Please try again.</p>';
+                });
+        }
+        
+        // Create a profile card element
+        function createProfileCard(profileId, profile) {
+            const div = document.createElement('div');
+            div.className = 'bg-white p-6 rounded-lg shadow-md';
+            div.innerHTML = `
+                <h3 class="text-xl font-bold">${profile.name || 'Unnamed'}</h3>
+                <p class="text-indigo-600 mb-2">${profile.title || 'No title'}</p>
+                ${profile.location ? `<p class="text-gray-600 text-sm mb-2">📍 ${profile.location}</p>` : ''}
+                <p class="mb-4">${profile.skills || 'No skills listed'}</p>
+                <button onclick="viewProfile('${profileId}')" class="text-indigo-600 hover:underline">View Profile</button>
+            `;
+            return div;
+        }
+        
+        // View a specific profile
+        function viewProfile(profileId) {
+            db.collection('profiles').doc(profileId).get()
+                .then(doc => {
+                    if (!doc.exists) {
+                        alert('Profile not found');
+                        return;
+                    }
+                    
+                    const profile = doc.data();
+                    const container = document.getElementById('profileViewContent');
+                    
+                    // Format portfolio links
+                    let portfolioLinks = '';
+                    if (profile.portfolio) {
+                        const links = profile.portfolio.split('\n').filter(link => link.trim() !== '');
+                        if (links.length > 0) {
+                            portfolioLinks = `
+                                <h3 class="text-lg font-bold mt-6 mb-2">Portfolio</h3>
+                                <ul class="list-disc pl-5">
+                                    ${links.map(link => `<li><a href="${link}" target="_blank" class="text-indigo-600 hover:underline">${link}</a></li>`).join('')}
+                                </ul>
+                            `;
+                        }
+                    }
+                    
+                    // Format social media links
+                    let socialLinks = [];
+                    if (profile.linkedin) socialLinks.push(`<a href="${profile.linkedin}" target="_blank" class="text-indigo-600 hover:underline">LinkedIn</a>`);
+                    if (profile.twitter) socialLinks.push(`<a href="${profile.twitter}" target="_blank" class="text-indigo-600 hover:underline">Twitter/X</a>`);
+                    if (profile.instagram) socialLinks.push(`<a href="${profile.instagram}" target="_blank" class="text-indigo-600 hover:underline">Instagram</a>`);
+                    if (profile.behance) socialLinks.push(`<a href="${profile.behance}" target="_blank" class="text-indigo-600 hover:underline">Behance</a>`);
+                    
+                    const socialMedia = socialLinks.length > 0 ? 
+                        `<h3 class="text-lg font-bold mt-6 mb-2">Social Media</h3>
+                        <div class="flex flex-wrap gap-4">${socialLinks.join(' ')}</div>` : '';
+                    
+                    container.innerHTML = `
+                        <h2 class="text-3xl font-bold">${profile.name || 'Unnamed'}</h2>
+                        <p class="text-xl text-indigo-600 mb-4">${profile.title || 'No title'}</p>
+                        
+                        ${profile.location ? `<p class="mb-4"><strong>Location:</strong> ${profile.location}</p>` : ''}
+                        ${profile.pay ? `<p class="mb-4"><strong>Expected Compensation:</strong> ${profile.pay}</p>` : ''}
+                        
+                        <h3 class="text-lg font-bold mt-6 mb-2">Skills</h3>
+                        <p>${profile.skills || 'No skills listed'}</p>
+                        
+                        ${profile.bio ? `
+                            <h3 class="text-lg font-bold mt-6 mb-2">About</h3>
+                            <p>${profile.bio}</p>
+                        ` : ''}
+                        
+                        ${portfolioLinks}
+                        ${socialMedia}
+                        
+                        <div class="mt-8 p-4 bg-gray-100 rounded-lg">
+                            <h3 class="text-lg font-bold mb-2">Contact Information</h3>
+                            <p><strong>Email:</strong> <a href="mailto:${profile.contactEmail}" class="text-indigo-600">${profile.contactEmail}</a></p>
+                        </div>
+                    `;
+                    
+                    showPage('profileView');
+                })
+                .catch(error => {
+                    console.error('Error viewing profile:', error);
+                    alert('Error loading profile. Please try again.');
+                });
+        }
+    </script>
+</body>
+</html>
